@@ -34,7 +34,7 @@
       padding: 2.5rem;
       border-radius: 18px;
       width: 100%;
-      max-width: 420px;
+      max-width: 480px;
       box-shadow: 0 0 40px rgba(0,0,0,0.45);
       border: 1px solid rgba(255,255,255,0.15);
     }
@@ -44,6 +44,7 @@
       font-size: 1.6rem;
       font-weight: 700;
       text-align: center;
+      color: var(--white);
     }
 
     .subtitle {
@@ -51,9 +52,10 @@
       font-size: 0.9rem;
       opacity: 0.85;
       margin-bottom: 1.75rem;
+      color: var(--white);
     }
 
-    .ip-box {
+    .box {
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.18);
       padding: 1.2rem;
@@ -61,19 +63,27 @@
       margin-bottom: 1rem;
     }
 
-    .ip-label {
+    .label {
       font-size: 0.75rem;
       text-transform: uppercase;
       opacity: 0.7;
       margin-bottom: 0.25rem;
+      color: var(--white);
     }
 
-    .ip-value {
+    .value {
       font-family: ui-monospace, monospace;
       font-size: 1.2rem;
       font-weight: 600;
-      color: var(--accent);
+      color: var(--white);
       word-break: break-all;
+    }
+
+    .details {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.4rem;
+      color: var(--white);
     }
 
     .status {
@@ -81,6 +91,7 @@
       opacity: 0.8;
       margin-bottom: 1.25rem;
       text-align: center;
+      color: var(--white);
     }
 
     .actions {
@@ -143,6 +154,7 @@
       text-align: center;
       font-size: 0.75rem;
       opacity: 0.7;
+      color: var(--white);
     }
   </style>
 </head>
@@ -150,12 +162,14 @@
 <body>
   <main class="card">
     <h1>My IP</h1>
-    <p class="subtitle">Your current public IP address</p>
+    <p class="subtitle">Your public IP and connection details</p>
 
-    <div class="ip-box">
-      <div class="ip-label">Detected IP</div>
-      <div id="ip-value" class="ip-value">Loading…</div>
+    <div class="box">
+      <div class="label">Public IP</div>
+      <div id="ip-value" class="value">Loading…</div>
     </div>
+
+    <div id="details" class="details"></div>
 
     <div id="status" class="status">Contacting IP service…</div>
 
@@ -171,24 +185,34 @@
 
   <script>
     const ipSpan = document.getElementById('ip-value');
+    const detailsEl = document.getElementById('details');
     const statusEl = document.getElementById('status');
-    const refreshBtn = document.getElementById('refresh-btn');
-    const copyBtn = document.getElementById('copy-btn');
 
     async function fetchIP() {
       statusEl.textContent = 'Contacting IP service…';
       ipSpan.textContent = 'Loading…';
+      detailsEl.innerHTML = '';
 
       try {
-        const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+        const res = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
 
         const data = await res.json();
+
         ipSpan.textContent = data.ip || 'Unavailable';
-        statusEl.textContent = 'IP loaded successfully.';
+
+        detailsEl.innerHTML = `
+          <strong>Location:</strong> ${data.city}, ${data.region}, ${data.country_name}<br>
+          <strong>ISP:</strong> ${data.org}<br>
+          <strong>Timezone:</strong> ${data.timezone}<br>
+          <strong>Country Code:</strong> ${data.country}<br>
+          <strong>Latitude / Longitude:</strong> ${data.latitude}, ${data.longitude}
+        `;
+
+        statusEl.textContent = 'IP details loaded.';
       } catch (err) {
         ipSpan.textContent = 'Error loading IP';
-        statusEl.textContent = 'Could not load IP. Try again.';
+        statusEl.textContent = 'Could not load IP details.';
       }
     }
 
@@ -202,12 +226,12 @@
         await navigator.clipboard.writeText(value);
         statusEl.textContent = 'Copied to clipboard.';
       } catch {
-        statusEl.textContent = 'Copy failed (browser blocked).';
+        statusEl.textContent = 'Copy failed.';
       }
     }
 
-    refreshBtn.addEventListener('click', fetchIP);
-    copyBtn.addEventListener('click', copyIP);
+    document.getElementById('refresh-btn').addEventListener('click', fetchIP);
+    document.getElementById('copy-btn').addEventListener('click', copyIP);
 
     fetchIP();
   </script>
